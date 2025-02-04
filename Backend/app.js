@@ -2,8 +2,13 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const connectToDB = require("./config/database");
 const dotenv = require("dotenv");
 dotenv.config();
+
+connectToDB();
+
+const userRoutes = require("./routes/user.routes")
 
 const app = express();
 
@@ -17,5 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
+
+app.use('/user', userRoutes)
 
 module.exports = app;
