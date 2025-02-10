@@ -8,7 +8,8 @@ dotenv.config();
 
 connectToDB();
 
-const userRoutes = require("./routes/user.routes")
+const userRoutes = require("./routes/user.routes");
+const captainRoutes = require("./routes/captain.routes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-app.use('/user', userRoutes)
+app.use("/user", userRoutes);
+app.use("/captain", captainRoutes);
 
 module.exports = app;
