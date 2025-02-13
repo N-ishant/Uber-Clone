@@ -1,17 +1,20 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainSignup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-
   const [vehicleColor, setVehicleColor] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [vehicleCapacity, setVehicleCapacity] = useState("");
   const [vehicleType, setVehicleType] = useState("");
-  const [captainData, setCaptainData] = useState({});
+  const baseURL = import.meta.env.VITE_BASE_URL;
+  const navigate = useNavigate();
+  const { captain, setCaptain } = useContext(CaptainDataContext);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -29,6 +32,18 @@ const CaptainSignup = () => {
         vehicleType: vehicleType,
       },
     };
+
+    const response = await axios.post(
+      `${baseURL}/captain/register`,
+      captainData
+    );
+
+    if (response.status === 201) {
+      const data = response.data;
+      setCaptain(data.captain);
+      localStorage.setItem("token", data.token);
+      navigate("/captain-home");
+    }
 
     setEmail("");
     setFirstName("");
@@ -154,7 +169,7 @@ const CaptainSignup = () => {
               </option>
               <option value="car">Car</option>
               <option value="auto">Auto</option>
-              <option value="moto">Moto</option>
+              <option value="motorcycle">Moto</option>
             </select>
           </div>
 
