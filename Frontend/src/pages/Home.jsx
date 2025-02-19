@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import "remixicon/fonts/remixicon.css";
@@ -8,6 +8,10 @@ import VehiclePanel from "../components/VehiclePanel";
 import ConfirmRide from "../components/ConfirmRide";
 import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
+import { SocketContext } from "../context/SocketContext";
+import { UserDataContext } from "../context/UserContext";
+import { useNavigate } from "react-router-dom";
+import LiveTracking from "../components/LiveTracking";
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
@@ -30,6 +34,27 @@ const Home = () => {
   const vehicleFoundRef = useRef(null);
   const waitingForDriverRef = useRef(null);
   const baseURL = import.meta.env.VITE_BASE_URL;
+
+  const navigate = useNavigate();
+
+  const { socket } = useContext(SocketContext);
+  const { user } = useContext(UserDataContext);
+
+  useEffect(() => {
+    socket.emit("join", { userType: "user", userId: user._id });
+  }, [user]);
+
+  socket.on("ride-confirmed", (ride) => {
+    setVehicleFound(false);
+    setWaitingForDriver(true);
+    setRide(ride);
+  });
+
+  socket.on("ride-started", (ride) => {
+    console.log("ride");
+    setWaitingForDriver(false);
+    navigate("/riding", { state: { ride } });
+  });
 
   const handlePickupChange = async (e) => {
     setPickup(e.target.value);
@@ -188,11 +213,7 @@ const Home = () => {
         alt=""
       />
       <div className="h-screen w-screen">
-        <img
-          className="h-full w-full object-cover"
-          src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
-          alt=""
-        />
+        <LiveTracking />
       </div>
       <div className="flex flex-col justify-end h-screen absolute top-0 w-full">
         <div className="h-[30%] p-6 bg-white relative">

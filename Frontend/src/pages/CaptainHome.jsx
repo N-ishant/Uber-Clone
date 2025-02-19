@@ -5,14 +5,70 @@ import gsap from "gsap";
 import CaptainDetails from "../components/CaptainDetails";
 import RidePopUp from "../components/RidePopUp";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
+import { SocketContext } from "../context/SocketContext";
+import { CaptainDataContext } from "../context/CaptainContext";
+import axios from "axios";
 
 const CaptainHome = () => {
-  const [ridePopupPanel, setRidePopupPanel] = useState(true);
+  const [ridePopupPanel, setRidePopupPanel] = useState(false);
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
   const [ride, setRide] = useState(null);
 
   const ridePopupPanelRef = useRef(null);
   const confirmRidePopupPanelRef = useRef(null);
+
+  const baseURL = import.meta.env.VITE_BASE_URL;
+
+  const { socket } = useContext(SocketContext);
+  const { captain } = useContext(CaptainDataContext);
+
+  useEffect(() => {
+    socket.emit("join", {
+      userId: captain._id,
+      userType: "captain",  
+    });
+    const updateLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          socket.emit("update-location-captain", {
+            userId: captain._id,
+            location: {
+              ltd: position.coords.latitude,
+              lng: position.coords.longitude,
+            },
+          });
+        });
+      }
+    };
+
+    const locationInterval = setInterval(updateLocation, 10000);
+    updateLocation();
+
+    // return () => clearInterval(locationInterval)
+  }, []);
+
+  socket.on("new-ride", (data) => {
+    setRide(data);
+    setRidePopupPanel(true);
+  });
+
+  async function confirmRide() {
+    const response = await axios.post(
+      `${baseURL}/rides/confirm`,
+      {
+        rideId: ride._id,
+        captainId: captain._id,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    setRidePopupPanel(false);
+    setConfirmRidePopupPanel(true);
+  }
 
   useGSAP(
     function () {
@@ -80,7 +136,7 @@ const CaptainHome = () => {
           ride={ride}
           setRidePopupPanel={setRidePopupPanel}
           setConfirmRidePopupPanel={setConfirmRidePopupPanel}
-          // confirmRide={confirmRide}
+          confirmRide={confirmRide}
         />
       </div>
 
